@@ -239,12 +239,32 @@ pexprs.Apply.prototype.handleCycle = function(state) {
   }
   return state.useMemoizedResult(state.inputStream.pos, memoRec);
 };
-
+let tmpStackCount = 0;
 pexprs.Apply.prototype.reallyEval = function(state) {
   var inputStream = state.inputStream;
   var origPos = inputStream.pos;
   var origPosInfo = state.getCurrentPosInfo();
-  var ruleInfo = state.grammar.rules[this.ruleName];
+  var ruleInfo;
+  var isSuperCall = this.ruleName === "_super";
+  var doNormalLookup = !isSuperCall;
+
+  if (isSuperCall) {
+    if (this.args.length === 0 || this.args[0].ruleName == null) {
+      console.error("No super parameter given to super-rule?");
+      doNormalLookup = true;
+    } else {
+      const superRuleName = this.args[0].ruleName;
+      ruleInfo = state.grammar.superGrammar.rules[superRuleName];
+      if (!ruleInfo) {
+        console.error("Given super rule couldn't be looked up", superRuleName);
+        doNormalLookup = true;
+      }
+    }
+  }
+
+  if (doNormalLookup) {
+    ruleInfo = state.grammar.rules[this.ruleName];
+  }
   var body = ruleInfo.body;
   var description = ruleInfo.description;
 
