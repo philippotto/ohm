@@ -165,9 +165,15 @@ GrammarDecl.prototype.override = function(name, formals, body, descIgnored, sour
 };
 
 GrammarDecl.prototype.extend = function(name, formals, fragment, descIgnored, source) {
-  var ruleInfo = this.ensureSuperGrammar().rules[name];
+  this.ensureSuperGrammar();
+  var ruleInfo = this.superGrammar.rules[name];
   if (!ruleInfo) {
-    throw errors.cannotExtendUndeclaredRule(name, this.superGrammar.name, source);
+    if (this.superGrammar.wasUniquified) {
+      // TODO: might need to traverse higher to the necessary super grammar
+      name = this.superGrammar.name + "$" + name;
+    } else {
+      throw errors.cannotExtendUndeclaredRule(name, this.superGrammar.name, source);
+    }
   }
   var body = new pexprs.Extend(this.superGrammar, name, fragment);
   body.source = fragment.source;
