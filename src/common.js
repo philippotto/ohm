@@ -107,7 +107,13 @@ exports.copyWithoutDuplicates = function(array) {
 };
 
 exports.isSyntactic = function(ruleName) {
-  var firstChar = ruleName[0];
+  const splitted = ruleName.split("$");
+  var firstChar;
+  if (splitted.length > 1) {
+    firstChar = splitted[1][0];
+  } else {
+    firstChar = ruleName[0];
+  }
   return firstChar === firstChar.toUpperCase();
 };
 
