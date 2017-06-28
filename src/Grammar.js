@@ -56,6 +56,25 @@ Grammar.prototype = {
     return this === Grammar.ProtoBuiltInRules || this === Grammar.BuiltInRules;
   },
 
+  // Takes a fully qualified rule and looks up the rule
+  // in this.namespace
+  lookUpQualifiedRule: function(ruleName) {
+    if (ruleName in this.rules) {
+      return this.rules[ruleName];
+    }
+    const qualifiedParts = ruleName.split("$");
+    const foreignGrammarName = qualifiedParts[0];
+    const foreignGrammar = this.namespace[foreignGrammarName];
+    if (foreignGrammar) {
+      return foreignGrammar.rules[ruleName];
+    }
+    return undefined;
+  },
+
+  qualifyRule: function(ruleName) {
+    
+  },
+
   equals: function(g) {
     if (this === g) {
       return true;
@@ -111,7 +130,9 @@ Grammar.prototype = {
     var problems = [];
     for (var k in actionDict) {
       var v = actionDict[k];
-      if (!isSpecialAction(k) && !(k in this.rules)) {
+      if (!isSpecialAction(k) && !this.lookUpQualifiedRule(k)) {
+        debugger;
+        this.lookUpQualifiedRule(k);
         problems.push("'" + k + "' is not a valid semantic action for '" + this.name + "'");
       } else if (typeof v !== 'function') {
         problems.push(
@@ -144,7 +165,7 @@ Grammar.prototype = {
     } else if (actionName === '_terminal') {
       return 0;
     }
-    return this.rules[actionName].body.getArity();
+    return this.lookUpQualifiedRule(actionName).body.getArity();
   },
 
   _inheritsFrom: function(grammar) {
@@ -274,6 +295,7 @@ Grammar.prototype = {
 
     // Ensure that the application is valid.
     if (!(app.ruleName in this.rules)) {
+      console.log("error in parseApplication", app.ruleName)
       throw errors.undeclaredRule(app.ruleName, this.name);
     }
     var formals = this.rules[app.ruleName].formals;

@@ -87,6 +87,7 @@ function buildGrammar(match, namespace, optOhmGrammarForTesting) {
         throw errors.duplicateGrammarDeclaration(g, namespace);
       }
       namespace[grammarName] = g;
+      g.namespace = namespace;
       return g;
     },
 

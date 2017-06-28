@@ -12,6 +12,7 @@ var pexprs = require('./pexprs');
 var TerminalNode = nodes.TerminalNode;
 var NonterminalNode = nodes.NonterminalNode;
 var IterationNode = nodes.IterationNode;
+var lookupUtil = require('./lookup-util');
 
 // --------------------------------------------------------------------
 // Operations
@@ -265,6 +266,42 @@ pexprs.Apply.prototype.reallyEval = function(state) {
   if (doNormalLookup) {
     ruleInfo = state.grammar.rules[this.ruleName];
   }
+  let swappedGrammar = false;
+  if (!ruleInfo) {
+    // this.ruleName could not be found in the current grammar.
+    const qualifiedParts = this.ruleName.split(".");
+    const foreignGrammarName = qualifiedParts[0];
+
+    let foreignGrammar = state.grammar.namespace[foreignGrammarName];
+
+    // TODOp
+    // look up the unqualified rule name in the inheritance chain
+
+    const qualifiedName = lookupUtil.qualifyName(foreignGrammar, qualifiedParts.slice(1).join("$"))
+
+    // const qualifiedName = [foreignGrammar.name].concat(qualifiedParts.slice(1)).join("$");
+
+    // Since namespace uses the prototype chain, we can't use Object.values
+    // for (const grammarName in state.grammar.namespace) {
+    //   const grammar = state.grammar.namespace[grammarName];
+    //   if (grammar.name === foreignGrammarName) {
+    //     foreignGrammar = grammar;
+    //     break;
+    //   }
+    // }
+
+    ruleInfo = foreignGrammar.rules[qualifiedName];
+    if (ruleInfo) {
+      state.grammarStack = state.grammarStack || [];
+      state.grammarStack.push(state.grammar);
+
+      state.grammar = foreignGrammar;
+      swappedGrammar = true;
+    } else {
+      debugger;
+    }
+  }
+
   var body = ruleInfo.body;
   var description = ruleInfo.description;
 
@@ -279,7 +316,21 @@ pexprs.Apply.prototype.reallyEval = function(state) {
   var origInputStreamExaminedLength = inputStream.examinedLength;
   inputStream.examinedLength = 0;
 
+  let shouldLog = !!global.shouldLog && this.ruleName.indexOf("$") > -1;
+  if (shouldLog) {
+    console.log(" ".repeat(tmpStackCount), "> ", this.ruleName)
+  }
+  tmpStackCount++;
   var value = this.evalOnce(body, state);
+
+  if (swappedGrammar) {
+    state.grammar = state.grammarStack.pop();
+  }
+
+  tmpStackCount--;
+  if (shouldLog) {
+    console.log(" ".repeat(tmpStackCount), "< ", this.ruleName)
+  }
   var currentLR = origPosInfo.currentLeftRecursion;
   var memoKey = this.toMemoKey();
   var isHeadOfLeftRecursion = currentLR && currentLR.headApplication.toMemoKey() === memoKey;

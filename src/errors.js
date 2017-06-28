@@ -60,8 +60,8 @@ function duplicateGrammarDeclaration(grammar, namespace) {
 // ----------------- rules -----------------
 
 // Undeclared rule
-
 function undeclaredRule(ruleName, grammarName, optInterval) {
+  console.log("is not declared");
   return createError(
       'Rule ' + ruleName + ' is not declared in grammar ' + grammarName,
       optInterval);

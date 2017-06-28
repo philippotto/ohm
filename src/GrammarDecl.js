@@ -9,6 +9,7 @@ var InputStream = require('./InputStream');
 var common = require('./common');
 var errors = require('./errors');
 var pexprs = require('./pexprs');
+var lookupUtil = require('./lookup-util');
 
 // --------------------------------------------------------------------
 // Private Stuff
@@ -168,10 +169,11 @@ GrammarDecl.prototype.extend = function(name, formals, fragment, descIgnored, so
   this.ensureSuperGrammar();
   var ruleInfo = this.superGrammar.rules[name];
   if (!ruleInfo) {
-    if (this.superGrammar.wasUniquified) {
-      // TODO: might need to traverse higher to the necessary super grammar
-      name = this.superGrammar.name + "$" + name;
-    } else {
+    // Search the given unqualified name in the inheritance chain
+    name = lookupUtil.qualifyName(this.superGrammar, name);
+    ruleInfo = this.rules[name];
+
+    if (ruleInfo == null) {
       throw errors.cannotExtendUndeclaredRule(name, this.superGrammar.name, source);
     }
   }

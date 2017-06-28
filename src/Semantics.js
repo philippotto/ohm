@@ -664,7 +664,7 @@ Operation.prototype.execute = function(semantics, nodeWrapper) {
     // the name of a rule in the grammar, or '_terminal' (for a terminal node), or '_iter' (for an
     // iteration node). In the latter case, the action function receives a single argument, which
     // is an array containing all of the children of the CST node.
-    var ctorName = nodeWrapper._node.ctorName;
+    var ctorName = nodeWrapper._node.ctorName.replace(".", "$");
     var actionFn = this.actionDict[ctorName];
     var ans;
     if (actionFn) {

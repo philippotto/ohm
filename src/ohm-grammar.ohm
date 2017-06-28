@@ -72,6 +72,7 @@ Ohm {
 
   nameRest
     = "_"
+    | "."
     | alnum
 
   ident  (an identifier)
