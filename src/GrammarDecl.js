@@ -124,7 +124,11 @@ GrammarDecl.prototype.build = function() {
     Object.keys(grammar.rules).forEach(function(ruleName) {
       var body = grammar.rules[ruleName].body;
       try {
-        body.assertIteratedExprsAreNotNullable(grammar, ruleName);
+        if (!global.warnedAboutSkippingAssertIteratedExprsAreNotNullable) {
+          global.warnedAboutSkippingAssertIteratedExprsAreNotNullable = true;
+          console.log("skipping assertIteratedExprsAreNotNullable")
+        }
+        // body.assertIteratedExprsAreNotNullable(grammar, ruleName);
       } catch (e) {
         grammarErrors.push(e);
       }
