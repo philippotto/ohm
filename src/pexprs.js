@@ -179,6 +179,10 @@ Apply.prototype.isSyntactic = function() {
 Apply.prototype.toMemoKey = function() {
   if (!this._memoKey) {
     Object.defineProperty(this, '_memoKey', {value: this.toString()});
+    // if (this._memoKey === "var") {
+    //   debugger;
+    // }
+    // console.log("setting", this._memoKey);
   }
   return this._memoKey;
 };

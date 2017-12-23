@@ -99,5 +99,5 @@ function compile(args) {
 module.exports = compile;
 
 if (require.main === module) {
-  console.log(compile(process.argv.slice(2)));
+  compile(process.argv.slice(2));
 }

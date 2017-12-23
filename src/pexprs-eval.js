@@ -14,6 +14,11 @@ var NonterminalNode = nodes.NonterminalNode;
 var IterationNode = nodes.IterationNode;
 var lookupUtil = require('./lookup-util');
 
+// if (global.trace == null) {
+  // global.trace = function() {};
+// }
+
+
 // --------------------------------------------------------------------
 // Operations
 // --------------------------------------------------------------------
@@ -98,6 +103,8 @@ pexprs.Lex.prototype.eval = function(state) {
 };
 
 pexprs.Alt.prototype.eval = function(state) {
+  // if (this.name === "FormalParameter")
+    // debugger;
   for (var idx = 0; idx < this.terms.length; idx++) {
     if (state.eval(this.terms[idx])) {
       return true;
@@ -199,21 +206,37 @@ pexprs.Lookahead.prototype.eval = function(state) {
 };
 
 pexprs.Apply.prototype.eval = function(state) {
+  // global.trace("eval");
   var caller = state.currentApplication();
+
+
   var actuals = caller ? caller.args : [];
   var app = this.substituteParams(actuals);
 
   var posInfo = state.getCurrentPosInfo();
   if (posInfo.isActive(app)) {
+    // global.trace("eval:handleCycle");
     // This rule is already active at this position, i.e., it is left-recursive.
+    // if (app.toMemoKey().indexOf("MemberExpression_propRefExp") > -1) {
+    //   debugger;
+    // }
     return app.handleCycle(state);
   }
 
   var memoKey = app.toMemoKey();
+  // if (memoKey === "var" && app.ruleName == "ES5$var") {
+  //   // this is wrong!!
+  //   debugger;
+  // }
+
   var memoRec = posInfo.memo[memoKey];
 
   if (memoRec && posInfo.shouldUseMemoizedResult(memoRec)) {
+    // if (caller && caller.ruleName.indexOf("MemberExpression_propRefExp") > -1 && memoKey.indexOf("MemberExpression_propRefExp") > -1) {
+    //   debugger;
+    // }
     if (state.hasNecessaryInfo(memoRec)) {
+      // global.trace("eval:useMemoizedResult()");
       return state.useMemoizedResult(state.inputStream.pos, memoRec);
     }
     delete posInfo.memo[memoKey];
@@ -240,13 +263,16 @@ pexprs.Apply.prototype.handleCycle = function(state) {
   }
   return state.useMemoizedResult(state.inputStream.pos, memoRec);
 };
-let tmpStackCount = 0;
+// let tmpStackCount = 0;
 pexprs.Apply.prototype.reallyEval = function(state) {
+  // global.trace("reallyEval");
+
   var inputStream = state.inputStream;
   var origPos = inputStream.pos;
   var origPosInfo = state.getCurrentPosInfo();
   var ruleInfo;
-  var isSuperCall = this.ruleName === "_super";
+  // _super
+  var isSuperCall = this.ruleName === "super";
   var doNormalLookup = !isSuperCall;
 
   if (isSuperCall) {
@@ -263,9 +289,13 @@ pexprs.Apply.prototype.reallyEval = function(state) {
     }
   }
 
+
   if (doNormalLookup) {
     ruleInfo = state.grammar.rules[this.ruleName];
   }
+  // if (inputStream.source.indexOf("aa.b") > -1 && this.ruleName.indexOf("MemberExpression_propRefExp") > -1) {
+  //   debugger;
+  // }
   let swappedGrammar = false;
   if (!ruleInfo) {
     // this.ruleName could not be found in the current grammar.
@@ -297,9 +327,10 @@ pexprs.Apply.prototype.reallyEval = function(state) {
 
       state.grammar = foreignGrammar;
       swappedGrammar = true;
-    } else {
-      debugger;
     }
+    // else {
+    //   debugger;
+    // }
   }
 
   var body = ruleInfo.body;
@@ -316,27 +347,30 @@ pexprs.Apply.prototype.reallyEval = function(state) {
   var origInputStreamExaminedLength = inputStream.examinedLength;
   inputStream.examinedLength = 0;
 
-  let shouldLog = !!global.shouldLog && this.ruleName.indexOf("$") > -1;
-  if (shouldLog) {
-    console.log(" ".repeat(tmpStackCount), "> ", this.ruleName)
-  }
-  tmpStackCount++;
+  // let shouldLog = !!global.shouldLog && this.ruleName.indexOf("Member") > -1;
+  // if (shouldLog) {
+    // console.log(" ".repeat(tmpStackCount), "> ", this.ruleName)
+  // }
+  // tmpStackCount++;
+
+  // !!! evalOnce !!!
   var value = this.evalOnce(body, state);
 
   if (swappedGrammar) {
     state.grammar = state.grammarStack.pop();
   }
 
-  tmpStackCount--;
-  if (shouldLog) {
-    console.log(" ".repeat(tmpStackCount), "< ", this.ruleName)
-  }
+  // tmpStackCount--;
+  // if (shouldLog) {
+    // console.log(" ".repeat(tmpStackCount), "< ", this.ruleName)
+  // }
   var currentLR = origPosInfo.currentLeftRecursion;
   var memoKey = this.toMemoKey();
   var isHeadOfLeftRecursion = currentLR && currentLR.headApplication.toMemoKey() === memoKey;
   var memoRec;
 
   if (isHeadOfLeftRecursion) {
+    // global.trace("reallyEval:isHeadOfLeftRecursion");
     value = this.growSeedResult(body, state, origPos, currentLR, value);
     origPosInfo.endLeftRecursion();
     memoRec = currentLR;
@@ -344,6 +378,7 @@ pexprs.Apply.prototype.reallyEval = function(state) {
     memoRec.rightmostFailureOffset = state._getRightmostFailureOffset();
     origPosInfo.memoize(memoKey, memoRec);  // updates origPosInfo's maxExaminedLength
   } else if (!currentLR || !currentLR.isInvolved(memoKey)) {
+    // global.trace("reallyEval:memoize");
     // This application is not involved in left recursion, so it's ok to memoize it.
     memoRec = origPosInfo.memoize(memoKey, {
       matchLength: inputStream.pos - origPos,
@@ -354,6 +389,7 @@ pexprs.Apply.prototype.reallyEval = function(state) {
     });
   }
   var succeeded = !!value;
+  // global.trace("reallyEval:succeeded=" + succeeded);
 
   if (description) {
     state.popFailuresInfo();

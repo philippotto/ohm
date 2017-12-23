@@ -126,7 +126,7 @@ GrammarDecl.prototype.build = function() {
       try {
         if (!global.warnedAboutSkippingAssertIteratedExprsAreNotNullable) {
           global.warnedAboutSkippingAssertIteratedExprsAreNotNullable = true;
-          console.log("skipping assertIteratedExprsAreNotNullable")
+          // console.log("skipping assertIteratedExprsAreNotNullable")
         }
         // body.assertIteratedExprsAreNotNullable(grammar, ruleName);
       } catch (e) {

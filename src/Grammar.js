@@ -131,7 +131,7 @@ Grammar.prototype = {
     for (var k in actionDict) {
       var v = actionDict[k];
       if (!isSpecialAction(k) && !this.lookUpQualifiedRule(k)) {
-        debugger;
+        // debugger;
         this.lookUpQualifiedRule(k);
         problems.push("'" + k + "' is not a valid semantic action for '" + this.name + "'");
       } else if (typeof v !== 'function') {

@@ -308,10 +308,10 @@ MatchState.prototype = {
 
     // Do the actual evaluation.
     var ans = expr.eval(this);
-    const shouldLog = !!global.shouldLog;
-    if (shouldLog) {
-      console.log(ans);
-    }
+    // const shouldLog = !!global.shouldLog;
+    // if (shouldLog) {
+    //   // console.log(ans);
+    // }
 
     if (this.trace) {
       var bindings = this._bindings.slice(origNumBindings);

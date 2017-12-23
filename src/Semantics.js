@@ -75,6 +75,7 @@ Wrapper.prototype.child = function(idx) {
     var source = this._baseInterval.subInterval(offset, childNode.matchLength);
     var base = childNode.isNonterminal() ? source : this._baseInterval;
     childWrapper = this._childWrappers[idx] = this._semantics.wrap(childNode, source, base);
+    // childWrapper.__parent = this;
   }
   return childWrapper;
 };
